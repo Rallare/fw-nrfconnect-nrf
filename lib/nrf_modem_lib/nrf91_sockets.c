@@ -810,12 +810,22 @@ static ssize_t nrf91_socket_offload_recvfrom(void *obj, void *buf, size_t len,
 		}
 
 		if (cliaddr->sa_family == NRF_AF_INET) {
-			nrf_to_z_ipv4(from, (struct nrf_sockaddr_in *)cliaddr);
+			struct sockaddr_in tmp_from;
+
+			nrf_to_z_ipv4((struct sockaddr *)&tmp_from,
+				      (struct nrf_sockaddr_in *)cliaddr);
+			memcpy(from, &tmp_from, MIN(*fromlen, sizeof(struct sockaddr_in)));
 			*fromlen = sizeof(struct sockaddr_in);
 		} else if (cliaddr->sa_family == NRF_AF_INET6) {
-			nrf_to_z_ipv6(from, (struct nrf_sockaddr_in6 *)
-					  cliaddr);
+			struct sockaddr_in6 tmp_from;
+
+			nrf_to_z_ipv6((struct sockaddr *)&tmp_from,
+				      (struct nrf_sockaddr_in6 *)cliaddr);
+			memcpy(from, &tmp_from, MIN(*fromlen, sizeof(struct sockaddr_in6)));
 			*fromlen = sizeof(struct sockaddr_in6);
+		} else {
+			/* Unknown family, indicate back that no data was written */
+			*fromlen = 0;
 		}
 	}
 
