@@ -20,6 +20,28 @@
 
 LOG_MODULE_REGISTER(wifi_prov, CONFIG_WIFI_PROVISIONING_LOG_LEVEL);
 
+#ifdef CONFIG_NRF_WIFI_LOW_POWER
+#include <zephyr_fmac_main.h>
+/* Needed to fetch the context for calling power management API */
+extern struct wifi_nrf_drv_priv_zep rpu_drv_priv_zep;
+struct wifi_nrf_ctx_zep *ctx = &rpu_drv_priv_zep.rpu_ctx_zep;
+#endif /* CONFIG_NRF_WIFI_LOW_POWER */
+
+int wifi_set_power_state(bool enable)
+{
+	#ifdef CONFIG_NRF_WIFI_LOW_POWER
+		enum wifi_nrf_status status = WIFI_NRF_STATUS_FAIL;
+		status = wifi_nrf_fmac_set_power_save(ctx->rpu_ctx,
+						0, enable);
+		if (status != WIFI_NRF_STATUS_SUCCESS) {
+			LOG_ERR("wifi_nrf_fmac_set_power_save failed");
+		}
+		LOG_DBG("Set PS %d\n", enable);
+	#endif /* CONFIG_NRF_WIFI_LOW_POWER */
+	return 1;
+}
+
+
 #define WIFI_PROV_MGMT_EVENTS (NET_EVENT_WIFI_SCAN_RESULT | \
 				NET_EVENT_WIFI_CONNECT_RESULT)
 
@@ -531,6 +553,8 @@ static void wifi_mgmt_event_handler(struct net_mgmt_event_callback *cb,
 		break;
 	case NET_EVENT_WIFI_CONNECT_RESULT:
 		handle_wifi_connect_result(cb);
+		wifi_set_power_state(true);
+		wifi_set_power_state(false);		
 		break;
 	default:
 		break;

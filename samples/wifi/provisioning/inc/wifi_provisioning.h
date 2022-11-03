@@ -104,6 +104,13 @@ int wifi_config_init(void);
  */
 int wifi_prov_init(void);
 
+/**
+ * @brief Set power save mode
+ * 
+ * @return 0 if successful
+*/
+int wifi_set_power_state(bool enable);
+
 #ifdef __cplusplus
 }
 #endif
